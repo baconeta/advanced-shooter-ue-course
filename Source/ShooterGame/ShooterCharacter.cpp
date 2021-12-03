@@ -29,6 +29,30 @@ void AShooterCharacter::BeginPlay()
 	
 }
 
+void AShooterCharacter::MoveForward(float Value)
+{
+	if (Controller && Value != 0.f)
+	{
+		// find the forward direction
+		const FRotator Rotation{ Controller->GetControlRotation() };
+		const FRotator YawRotation{ 0, Rotation.Yaw, 0 };
+		const FVector Direction{ FRotationMatrix{YawRotation}.GetUnitAxis(EAxis::X) };
+		AddMovementInput(Direction, Value);
+	}
+}
+
+void AShooterCharacter::MoveRight(float Value)
+{
+	if (Controller && Value != 0.f)
+	{
+		// find the right direction
+		const FRotator Rotation{ Controller->GetControlRotation() };
+		const FRotator YawRotation{ 0, Rotation.Yaw, 0 };
+		const FVector Direction{ FRotationMatrix{YawRotation}.GetUnitAxis(EAxis::Y) };
+		AddMovementInput(Direction, Value);
+	}
+}
+
 // Called every frame
 void AShooterCharacter::Tick(float DeltaTime)
 {
