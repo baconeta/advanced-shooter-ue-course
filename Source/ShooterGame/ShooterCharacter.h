@@ -25,10 +25,17 @@ protected:
 	// Called for side to side input
 	void MoveRight(float Value); 
 
-	/* Called ia input to turn at a given rate
+	/* 
+	 * Called via input to turn at a given rate
 	 * @param Rate This is a normalized rate, i.e 1.0 = 100% of desired turn rate
 	 */
 	void TurnAtRate(float Rate);
+
+	/* 
+	 * Called via input to look up and down at a given rate
+	 * @param Rate This is a normalized rate, i.e 1.0 = 100% of desired turn rate
+	 */
+	void LookUpAtRate(float Rate);
 
 public:	
 	// Called every frame
