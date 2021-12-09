@@ -37,6 +37,15 @@ protected:
 	 */
 	void LookUpAtRate(float Rate);
 
+	/* Called when the Fire Button is pressed */
+	void FireWeapon();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat", meta = (AllowPrivateAccess = "true"))
+	class USoundCue* FireSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat", meta = (AllowPrivateAccess = "true"))
+	class UParticleSystem* MuzzleFlash;
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
