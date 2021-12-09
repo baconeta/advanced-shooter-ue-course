@@ -40,9 +40,11 @@ protected:
 	/* Called when the Fire Button is pressed */
 	void FireWeapon();
 
+	/* Randomized gunshot sound cue */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat", meta = (AllowPrivateAccess = "true"))
 	class USoundCue* FireSound;
 
+	/* Flash spawned at BarrelSocket */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat", meta = (AllowPrivateAccess = "true"))
 	class UParticleSystem* MuzzleFlash;
 
