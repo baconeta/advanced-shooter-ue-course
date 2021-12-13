@@ -7,14 +7,14 @@
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundCue.h"
 #include "Engine/SkeletalMeshSocket.h"
+#include "Particles/ParticleSystemComponent.h"
 
 // Sets default values
 AShooterCharacter::AShooterCharacter() :
 	BaseTurnRate(45.f),
 	BaseLookUpRate(45.f)
 {
-	
- 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 	// Create a camera boom and pulls in towards character if there is a collision
@@ -22,6 +22,7 @@ AShooterCharacter::AShooterCharacter() :
 	CameraBoom->SetupAttachment(RootComponent);
 	CameraBoom->TargetArmLength = 300.f;
 	CameraBoom->bUsePawnControlRotation = true;
+	CameraBoom->SocketOffset = FVector(0.f, 50.f, 50.f);
 
 	// Create and attach Camera
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("Follow Camera"));
@@ -30,11 +31,11 @@ AShooterCharacter::AShooterCharacter() :
 
 	/* Don't rotate character with the controller */
 	bUseControllerRotationPitch = false;
-	bUseControllerRotationYaw = false;
+	bUseControllerRotationYaw = true;
 	bUseControllerRotationYaw = false;
 
-	/* Configure characte movement */
-	GetCharacterMovement()->bOrientRotationToMovement = true;
+	/* Configure character movement */
+	GetCharacterMovement()->bOrientRotationToMovement = false;
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 540.f, 0.f);
 	GetCharacterMovement()->JumpZVelocity = 600.f;
 	GetCharacterMovement()->AirControl = 0.2f;
@@ -44,7 +45,6 @@ AShooterCharacter::AShooterCharacter() :
 void AShooterCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 void AShooterCharacter::MoveForward(float Value)
@@ -52,9 +52,9 @@ void AShooterCharacter::MoveForward(float Value)
 	if (Controller && Value != 0.f)
 	{
 		// find the forward direction
-		const FRotator Rotation{ Controller->GetControlRotation() };
-		const FRotator YawRotation{ 0, Rotation.Yaw, 0 };
-		const FVector Direction{ FRotationMatrix{YawRotation}.GetUnitAxis(EAxis::X) };
+		const FRotator Rotation{Controller->GetControlRotation()};
+		const FRotator YawRotation{0, Rotation.Yaw, 0};
+		const FVector Direction{FRotationMatrix{YawRotation}.GetUnitAxis(EAxis::X)};
 		AddMovementInput(Direction, Value);
 	}
 }
@@ -64,9 +64,9 @@ void AShooterCharacter::MoveRight(float Value)
 	if (Controller && Value != 0.f)
 	{
 		// find the right direction
-		const FRotator Rotation{ Controller->GetControlRotation() };
-		const FRotator YawRotation{ 0, Rotation.Yaw, 0 };
-		const FVector Direction{ FRotationMatrix{YawRotation}.GetUnitAxis(EAxis::Y) };
+		const FRotator Rotation{Controller->GetControlRotation()};
+		const FRotator YawRotation{0, Rotation.Yaw, 0};
+		const FVector Direction{FRotationMatrix{YawRotation}.GetUnitAxis(EAxis::Y)};
 		AddMovementInput(Direction, Value);
 	}
 }
@@ -97,6 +97,31 @@ void AShooterCharacter::FireWeapon()
 		{
 			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), MuzzleFlash, SocketTransform);
 		}
+		FHitResult FireHit;
+		const FVector Start{SocketTransform.GetLocation()};
+		const FQuat Rotation{SocketTransform.GetRotation()};
+		const FVector RotationAxis{Rotation.GetAxisX()};
+		const FVector End{Start + RotationAxis * 50'000.f};
+
+		FVector BeamEndPoint{End};
+		GetWorld()->LineTraceSingleByChannel(FireHit, Start, End, ECollisionChannel::ECC_Visibility);
+		if (FireHit.bBlockingHit)
+		{
+			BeamEndPoint = FireHit.Location;
+			if (ImpactParticles)
+			{
+				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactParticles, FireHit.Location);
+			}
+		}
+		if (BeamParticles)
+		{
+			UParticleSystemComponent* Beam = UGameplayStatics::SpawnEmitterAtLocation(
+				GetWorld(), BeamParticles, SocketTransform);
+			if (Beam)
+			{
+				Beam->SetVectorParameter(FName("Target"), BeamEndPoint);
+			}
+		}
 	}
 	UAnimInstance* AnimInstan = GetMesh()->GetAnimInstance();
 
@@ -111,7 +136,6 @@ void AShooterCharacter::FireWeapon()
 void AShooterCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 // Called to bind functionality to input
@@ -131,4 +155,3 @@ void AShooterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
 	PlayerInputComponent->BindAction("FireButton", IE_Pressed, this, &AShooterCharacter::FireWeapon);
 }
-

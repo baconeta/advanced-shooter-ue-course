@@ -20,10 +20,10 @@ protected:
 	virtual void BeginPlay() override;
 
 	// Called for forwards/backwards input
-	void MoveForward(float Value); 
+	void MoveForward(float Value);
 
 	// Called for side to side input
-	void MoveRight(float Value); 
+	void MoveRight(float Value);
 
 	/* 
 	 * Called via input to turn at a given rate
@@ -40,7 +40,7 @@ protected:
 	/* Called when the Fire Button is pressed */
 	void FireWeapon();
 
-public:	
+public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
@@ -75,9 +75,15 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat", meta = (AllowPrivateAccess = "true"))
 	class UParticleSystem* MuzzleFlash;
 
+	/* Particles spawned at Impact location of bullet */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat", meta = (AllowPrivateAccess = "true"))
+	UParticleSystem* ImpactParticles;
+
+	/* Smoke trail spawned for bullets */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat", meta = (AllowPrivateAccess = "true"))
+	UParticleSystem* BeamParticles;
 
 public:
 	FORCEINLINE USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
-
 };
