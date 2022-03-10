@@ -12,7 +12,38 @@
 // Sets default values
 AShooterCharacter::AShooterCharacter() :
 	BaseTurnRate(45.f),
+<<<<<<< Updated upstream
 	BaseLookUpRate(45.f)
+=======
+	BaseLookUpRate(45.f),
+
+	// Mouse look sensitivity scale factors
+	MouseHipTurnRate(1.f),
+	MouseHipLookUpRate(1.f),
+	MouseAimTurnRate(0.3f),
+	MouseAimLookUpRate(0.3f),
+
+	// Default crosshair spread factors
+	CrosshairAimFactor(0.f),
+	CrosshairInAirFactor(0.f),
+	CrosshairSpreadMultiplier(0.f),
+	CrosshairVelocityFactor(0.f),
+	CrosshairShootingFactor(0.f),
+
+	// Bullet fire timer variables
+	bFiringBullet(false),
+	ShootTimeDuration(0.05f),
+
+	// Automatic gun fire variables
+	AutomaticFireRate(0.15f),
+	bShouldFire(true),
+	bFireButtonPressed(false),
+
+	bShouldTraceForItems(false),
+	ItemInterpDistanceFromCamera(250.f),
+	ItemInterpDistanceAboveCamera(70.f)
+
+>>>>>>> Stashed changes
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -45,6 +76,17 @@ AShooterCharacter::AShooterCharacter() :
 void AShooterCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+<<<<<<< Updated upstream
+=======
+
+	if (FollowCamera)
+	{
+		CameraDefaultFOV = GetFollowCamera()->FieldOfView;
+		CurrentCameraFOV = CameraDefaultFOV;
+	}
+	//Spawn and equip the default weapon
+	EquipWeapon(SpawnDefaultWeapon());
+>>>>>>> Stashed changes
 }
 
 void AShooterCharacter::MoveForward(float Value)
@@ -115,6 +157,7 @@ void AShooterCharacter::FireWeapon()
 		}
 		if (BeamParticles)
 		{
+<<<<<<< Updated upstream
 			UParticleSystemComponent* Beam = UGameplayStatics::SpawnEmitterAtLocation(
 				GetWorld(), BeamParticles, SocketTransform);
 			if (Beam)
@@ -131,28 +174,154 @@ void AShooterCharacter::FireWeapon()
 		//Spawn the weapon
 		AWeapon* DefaultWeapon = GetWorld()->SpawnActor<AWeapon>(DefaultWeaponClass);
 		
+=======
+			OutHitLocation = OutHitResult.Location;
+			return true;
+		}
 	}
+
+	return false;
+}
+
+void AShooterCharacter::FinishCrosshairBulletFire()
+{
+	bFiringBullet = false;
+}
+
+void AShooterCharacter::TraceForItems()
+{
+	if (bShouldTraceForItems)
+	{
+		FHitResult ItemTraceResult;
+		FVector HitLocation;
+		TraceUnderCrosshairs(ItemTraceResult, HitLocation);
+		if (ItemTraceResult.bBlockingHit)
+		{
+			TraceHitItem = Cast<AItem>(ItemTraceResult.Actor);
+			if (TraceHitItem && TraceHitItem->GetPickupWidget())
+			{
+				TraceHitItem->SetPickupWidgetVisibility(true);
+			}
+			if (IsValid(LastTracedItem))
+			{
+				if (TraceHitItem != LastTracedItem)
+				{
+					// Either HitItem is null or we are hitting a different AItem now
+					LastTracedItem->SetPickupWidgetVisibility(false);
+				}
+			}
+			LastTracedItem = TraceHitItem;
+		}
+	}
+	else if (IsValid(LastTracedItem))
+	{
+		// No longer should be tracing ANY items so turn off all
+		LastTracedItem->SetPickupWidgetVisibility(false);
+	}
+}
+
+AWeapon* AShooterCharacter::SpawnDefaultWeapon() const
+{
+	if (IsValid(DefaultWeaponClass))
+	{
+		//Spawn the default weapon
+		return GetWorld()->SpawnActor<AWeapon>(DefaultWeaponClass);
+>>>>>>> Stashed changes
+	}
+	return nullptr;
 }
 
 void AShooterCharacter::EquipWeapon(AWeapon* WeaponToEquip)
 {
 	if (IsValid(WeaponToEquip))
 	{
-		WeaponToEquip->GetAreaSphere()->SetCollisionResponseToChannels(ECR_Ignore);
-		WeaponToEquip->GetCollisionBox()->SetCollisionResponseToChannels(ECR_Ignore);
 		const USkeletalMeshSocket* HandSocket = GetMesh()->GetSocketByName(FName("RightHandSocket"));
 		if (IsValid(HandSocket))
 		{
-			// Attack weapon to right hand socket
+			// Attach weapon to right hand socket
 			HandSocket->AttachActor(WeaponToEquip, GetMesh());
 		}
 
 		EquippedWeapon = WeaponToEquip;
+<<<<<<< Updated upstream
 =======
 		AnimInstan->Montage_Play(HipFireMontage);
 		AnimInstan->Montage_JumpToSection(FName("StartFire"));
 >>>>>>> parent of 92db06e (Split weapons, complete new level additions, and function for items, weapons, equipping)
+=======
+		EquippedWeapon->SetItemState(EItemState::EIS_Equipped);
+>>>>>>> Stashed changes
 	}
+}
+
+void AShooterCharacter::DropWeapon() const
+{
+	if (EquippedWeapon)
+	{
+		const FDetachmentTransformRules DetachmentTransformRules(EDetachmentRule::KeepWorld, true);
+		EquippedWeapon->GetItemMesh()->DetachFromComponent(DetachmentTransformRules);
+		EquippedWeapon->SetItemState(EItemState::EIS_Falling);
+		EquippedWeapon->ThrowWeapon();
+	}
+}
+
+void AShooterCharacter::SelectButtonPressed()
+{
+	if (TraceHitItem)
+	{
+		const auto TraceHitWeapon = Cast<AWeapon>(TraceHitItem);
+		SwapWeapon(TraceHitWeapon);
+	}
+}
+
+void AShooterCharacter::SelectButtonReleased()
+{
+}
+
+void AShooterCharacter::SwapWeapon(AWeapon* WeaponToSwapTo)
+{
+	DropWeapon();
+	EquipWeapon(WeaponToSwapTo);
+	TraceHitItem = nullptr;
+	LastTracedItem = nullptr;
+}
+
+void AShooterCharacter::GetPickupItem(AItem* Item)
+{
+	const auto Weapon = Cast<AWeapon>(Item);
+	if (Weapon)
+	{
+		SwapWeapon(Weapon);
+	}
+}
+
+FVector AShooterCharacter::CalculateItemInterpToLocation() const
+{
+	const FVector CameraWorldLocation{FollowCamera->GetComponentLocation()};
+	const FVector CameraForward{FollowCamera->GetForwardVector()};
+
+	return CameraWorldLocation + CameraForward * ItemInterpDistanceFromCamera +
+		FVector{0.f, 0.f, ItemInterpDistanceAboveCamera};
+}
+
+
+void AShooterCharacter::IncrementOverlappedItemCount(const int8 Amount)
+{
+	if (OverlappedItemCount + Amount <= 0)
+	{
+		OverlappedItemCount = 0;
+		bShouldTraceForItems = false;
+	}
+	else
+	{
+		OverlappedItemCount += Amount;
+		bShouldTraceForItems = true;
+	}
+}
+
+float AShooterCharacter::GetCrosshairSpreadMultiplier() const
+{
+	return CrosshairSpreadMultiplier;
 }
 
 // Called every frame
@@ -176,5 +345,14 @@ void AShooterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
+<<<<<<< Updated upstream
 	PlayerInputComponent->BindAction("FireButton", IE_Pressed, this, &AShooterCharacter::FireWeapon);
+=======
+	PlayerInputComponent->BindAction("FireButton", IE_Pressed, this, &AShooterCharacter::FireButtonPressed);
+	PlayerInputComponent->BindAction("FireButton", IE_Released, this, &AShooterCharacter::FireButtonReleased);
+	PlayerInputComponent->BindAction("AimingButton", IE_Pressed, this, &AShooterCharacter::AimingButtonPressed);
+	PlayerInputComponent->BindAction("AimingButton", IE_Released, this, &AShooterCharacter::AimingButtonReleased);
+	PlayerInputComponent->BindAction("Select", IE_Pressed, this, &AShooterCharacter::SelectButtonPressed);
+	PlayerInputComponent->BindAction("Select", IE_Released, this, &AShooterCharacter::SelectButtonReleased);
+>>>>>>> Stashed changes
 }
