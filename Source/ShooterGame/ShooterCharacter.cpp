@@ -127,8 +127,31 @@ void AShooterCharacter::FireWeapon()
 
 	if (AnimInstan && HipFireMontage)
 	{
+<<<<<<< HEAD
+		//Spawn the weapon
+		AWeapon* DefaultWeapon = GetWorld()->SpawnActor<AWeapon>(DefaultWeaponClass);
+		
+	}
+}
+
+void AShooterCharacter::EquipWeapon(AWeapon* WeaponToEquip)
+{
+	if (IsValid(WeaponToEquip))
+	{
+		WeaponToEquip->GetAreaSphere()->SetCollisionResponseToChannels(ECR_Ignore);
+		WeaponToEquip->GetCollisionBox()->SetCollisionResponseToChannels(ECR_Ignore);
+		const USkeletalMeshSocket* HandSocket = GetMesh()->GetSocketByName(FName("RightHandSocket"));
+		if (IsValid(HandSocket))
+		{
+			// Attack weapon to right hand socket
+			HandSocket->AttachActor(WeaponToEquip, GetMesh());
+		}
+
+		EquippedWeapon = WeaponToEquip;
+=======
 		AnimInstan->Montage_Play(HipFireMontage);
 		AnimInstan->Montage_JumpToSection(FName("StartFire"));
+>>>>>>> parent of 92db06e (Split weapons, complete new level additions, and function for items, weapons, equipping)
 	}
 }
 
